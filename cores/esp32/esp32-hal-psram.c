@@ -101,9 +101,12 @@ bool psramAddToHeap() {
     return false;
   }
 #if CONFIG_SPIRAM_USE_MALLOC && !CONFIG_ARDUINO_ISR_IRAM
-  heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
+  // AGGRESSIVE PSRAM MODE: Route allocations >16 bytes to SPIRAM
+  // Keep small allocations in internal RAM for crypto/DMA compatibility
+  // Original: heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
+  heap_caps_malloc_extmem_enable(16);  // 16 = balance between SPIRAM usage and crypto compatibility
 #endif
-  log_i("PSRAM added to the heap.");
+  log_i("PSRAM added to heap (aggressive mode: threshold=16 bytes).");
   return true;
 }
 
