@@ -101,12 +101,14 @@ bool psramAddToHeap() {
     return false;
   }
 #if CONFIG_SPIRAM_USE_MALLOC && !CONFIG_ARDUINO_ISR_IRAM
-  // AGGRESSIVE PSRAM MODE: Route allocations >16 bytes to SPIRAM
-  // Keep small allocations in internal RAM for crypto/DMA compatibility
-  // Original: heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
-  heap_caps_malloc_extmem_enable(16);  // 16 = balance between SPIRAM usage and crypto compatibility
+  // Route allocations above the configured threshold to SPIRAM.
+  // Use the sdkconfig value (CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL, typically 4096)
+  // to keep WiFi/DMA/NVS structures in internal RAM for cache coherency.
+  // ESP32-C5 Rev 1.0: PSRAM memory barrier workaround is broken, so WiFi/DMA
+  // structures in PSRAM cause Load access faults. Do NOT lower this threshold.
+  heap_caps_malloc_extmem_enable(CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
 #endif
-  log_i("PSRAM added to heap (aggressive mode: threshold=16 bytes).");
+  log_i("PSRAM added to heap (threshold=%d bytes).", CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
   return true;
 }
 
