@@ -388,6 +388,13 @@ bool BLEDevice::init(String deviceName) {
 
 #if defined(CONFIG_NIMBLE_ENABLED)
   errRc = nimble_port_init();
+  // If NimBLE is already running (e.g. initialized by Matter), reuse it instead of failing.
+  if (errRc == ESP_ERR_INVALID_STATE || errRc == 0x103) {
+    log_w("nimble_port_init: already initialized, reusing existing NimBLE stack");
+    initialized = true;
+    m_synced = true;
+    return true;
+  }
   if (errRc != ESP_OK) {
     log_e("nimble_port_init: rc=%d %s", errRc, GeneralUtils::errorToString(errRc));
     return false;
